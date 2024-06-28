@@ -65,6 +65,11 @@ def get_proxies(db: Session = Depends(get_db)):
     return proxies
 
 
+@app.get('/proxies/{proxy_id}', response_model=schemas.Proxy)
+def get_proxy(proxy_id: int, db: Session = Depends(get_db)):
+    return crud.get_proxy(db=db, proxy_id=proxy_id)
+
+
 @app.delete('/proxies/{proxy_id}')
 def delete_proxy(proxy_id: int, db: Session = Depends(get_db)):
     return crud.delete_proxy(db=db, proxy_id=proxy_id)
@@ -93,6 +98,21 @@ def get_configs(db: Session = Depends(get_db)):
 @app.get('/config', response_model=schemas.ConfigClick)
 def get_config(db: Session = Depends(get_db)):
     return crud.get_config(db=db, config_id=1)
+
+
+@app.get('/const')
+def get_const():
+    return crud.get_const()
+
+
+@app.post('/const/{id}')
+def update_const(id: str):
+    return crud.update_const(id=id)
+
+
+@app.post('/click/{proxy_id}')
+def click(proxy_id: int, db: Session = Depends(get_db)):
+    return crud.click(db=db, proxy_id=proxy_id)
 
 
 @app.websocket("/")

@@ -21,3 +21,14 @@ class Config(Base):
     pause = Column(Boolean, default=True)
     api_key = Column(String)
     url = Column(String)
+
+
+class City(Base):
+    __tablename__ = 'cities'
+
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    startField = Column(Integer, default=0)
+    currentField = Column(Integer, default=0)
+    taken = Column(Boolean, default=False)
+    counter = Column(Integer, default=0)
