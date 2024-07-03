@@ -115,13 +115,11 @@ def click(proxy_id: int, db: Session = Depends(get_db)):
     return crud.click(db=db, proxy_id=proxy_id)
 
 
-@app.websocket("/")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.broadcast(data)
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print(f'{websocket} disconnected')
+@app.get('/tets')
+def test():
+    return crud.test()
+
+
+@app.put('/browser_api/{proxy_id}')
+def update_browser(proxy_id: int, browser_api: schemas.BrowserApi, db: Session = Depends(get_db)):
+    return crud.update_browser_config(db=db, proxy_id=proxy_id, browser_api=browser_api)

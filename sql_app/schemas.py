@@ -15,9 +15,15 @@ class Proxy(ProxyBase):
     id: int
     when_change: int
     taken: bool
+    browser_api: str
+    city_id: str
 
     class Config:
         from_attributes = True
+
+
+class BrowserApi(BaseModel):
+    browser_api: str
 
 
 class ConfigClickBase(BaseModel):

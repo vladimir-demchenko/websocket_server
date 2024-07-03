@@ -12,6 +12,8 @@ class Proxy(Base):
     when_change = Column(Integer, default=0)
     change_ip = Column(String)
     taken = Column(Boolean, default=False)
+    browser_api = Column(String, default='')
+    city_id = Column(String, default='')
 
 
 class Config(Base):
