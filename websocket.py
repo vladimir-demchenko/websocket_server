@@ -95,7 +95,7 @@ def get_configs(db: Session = Depends(get_db)):
     return crud.get_configs(db=db)
 
 
-@app.get('/config', response_model=schemas.ConfigClick)
+@app.get('/config')
 def get_config(db: Session = Depends(get_db)):
     return crud.get_config(db=db, config_id=1)
 
