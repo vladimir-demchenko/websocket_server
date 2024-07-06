@@ -10,7 +10,7 @@ class Proxy(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     proxy_id = Column(String)
     url = Column(String)
-    when_change = Column(Integer, default=0)
+    when_change = Column(Float, default=0)
     change_ip = Column(String)
     taken = Column(Boolean, default=False)
     browser_api = Column(String, default='')

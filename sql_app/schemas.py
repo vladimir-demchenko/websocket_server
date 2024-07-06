@@ -13,7 +13,7 @@ class ProxyCreate(ProxyBase):
 
 class Proxy(ProxyBase):
     id: int
-    when_change: int
+    when_change: float
     taken: bool
     browser_api: str
     city_id: str
