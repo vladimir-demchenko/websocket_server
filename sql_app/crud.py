@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import func
 import requests
 import time
 from . import models, schemas, const, utils
 from urllib.parse import urlparse
+import random
 
 
 def get_proxies(db: Session):
@@ -93,22 +95,36 @@ def click(db: Session, proxy_id: int):
 
     # if when_change - now < 10min -> change_ip + create profile + click+1
     # else -> get_random_city + Proxy.city_id = res[0] + create_profile + click+1
-    # if time.time() - proxy.when_change < 600:
-    r_ip = requests.get(url=proxy.change_ip+'&format=json',
-                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
-    print(r_ip.text)
-    # else:
-    #     if proxy.city_id:
-    #         const.const_cities[proxy.city_id]['taken'] = False
-    #     result = utils.get_random_city(const.const_cities)
-    #     if isinstance(result, str):
-    #         print(result)
-    #         return result
-    #     db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.city_id: result[0],
-    #                                                                        models.Proxy.when_change: time.time()})
-    #     db.commit()
-    #     # r_ip = requests.get(url=proxy.change_ip+'&format=json',
-    #                     headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+    if time.time() - proxy.when_change < 600:
+        r_ip = requests.get(url=proxy.change_ip+'&format=json',
+                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+        print(r_ip.text)
+        print('Change ip')
+    else:
+        if proxy.city_id:
+            db.query(models.City).filter(models.City.id ==
+                                         proxy.city_id).update({models.City.taken: False})
+            db.commit()
+        random_city = db.query(models.City).filter(
+            models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
+        db.query(models.City).filter(models.City.id ==
+                                     random_city.id).update({models.City.taken: True})
+        # if isinstance(result, str):
+        #     print(result)
+        #     return result
+        config = db.query(models.Config).first()
+        r_c = requests.get(url=f'https://mobileproxy.space/api.html?command=change_equipment&proxy_id={int(proxy.proxy_id)}&id_city={int(random_city.id)}',
+                           headers={'Authorization': f"Bearer {config.api_key}"})
+        response = r_c.json()
+        print(response)
+        if 'error' in response or response['status'] == 'err':
+            return "Error"
+        db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.city_id: random_city.id,
+                                                                           models.Proxy.when_change: time.time()})
+        db.commit()
+        r_ip = requests.get(url=proxy.change_ip+'&format=json',
+                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+        print('Change city')
 
     url = "https://dolphin-anty-api.com/browser_profiles"
 
@@ -130,6 +146,9 @@ def click(db: Session, proxy_id: int):
             "ipAddress": None
         },
         "canvas": {
+            "mode": "real"
+        },
+        "webgl": {
             "mode": "real"
         },
         "webglInfo": {
@@ -168,11 +187,25 @@ def click(db: Session, proxy_id: int):
     return response.json()
 
 
-def test():
-    # utils.update_start_field(
-    #     const.const_cities, const.click_config['09:00-17:00'], const.interval_config['09:00-17:00'])
-    # return utils.get_random_city(const.const_cities)
-    return utils.current_interval()
+def test(db: Session):
+    # cities = db.query(models.City).all()
+    # for city in cities:
+    #     clicks = db.query(models.Clicks).filter(
+    #         models.Clicks.interval == '09:00-17:00', models.Clicks.city_id == city.id).first()
+    #     db.query(models.City).filter(models.City.id == city.id).update(
+    #         {models.City.currentField: int(clicks.click_value * 500)})
+    #     db.commit()
+    # return "Success"
+    return db.query(models.City).filter(
+        models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
+
+
+def get_cities(db: Session):
+    return db.query(models.City).all()
+
+
+def get_city(city_id: str, db: Session):
+    return db.query(models.City).filter(models.City.id == city_id).first()
 
 
 def update_browser_config(db: Session, proxy_id: int, browser_api: schemas.BrowserApi):

@@ -6,24 +6,20 @@ lock = threading.Lock()
 
 
 def get_random_city(cities):
-    keys = list(cities.keys())
 
     while True:
         with lock:
-            if all(city['taken'] for city in cities.values()):
+            if all(city['taken'] for city in cities):
                 return 'All cities are taken'
 
         with lock:
-            if all(city['counter'] >= city['CurrentField'] for city in cities.values()):
+            if all(city['counter'] >= city['CurrentField'] for city in cities):
                 return 'No available city'
 
-        random_key = random.choice(keys)
-
         with lock:
-            city = cities[random_key]
+            city = random.choice(cities)
             if not city['taken'] and city['counter'] < city['CurrentField']:
-                city['taken'] = True
-                return random_key, city
+                return city
 
 
 def calculate_new_limit(start_field):

@@ -65,7 +65,7 @@ def get_proxies(db: Session = Depends(get_db)):
     return proxies
 
 
-@app.get('/proxies/{proxy_id}', response_model=schemas.Proxy)
+@app.get('/proxies/{proxy_id}')
 def get_proxy(proxy_id: int, db: Session = Depends(get_db)):
     return crud.get_proxy(db=db, proxy_id=proxy_id)
 
@@ -100,26 +100,26 @@ def get_config(db: Session = Depends(get_db)):
     return crud.get_config(db=db, config_id=1)
 
 
-@app.get('/const')
-def get_const():
-    return crud.get_const()
-
-
-@app.post('/const/{id}')
-def update_const(id: str):
-    return crud.update_const(id=id)
-
-
 @app.post('/click/{proxy_id}')
 def click(proxy_id: int, db: Session = Depends(get_db)):
     return crud.click(db=db, proxy_id=proxy_id)
 
 
 @app.get('/tets')
-def test():
-    return crud.test()
+def test(db: Session = Depends(get_db)):
+    return crud.test(db=db)
 
 
 @app.put('/browser_api/{proxy_id}')
 def update_browser(proxy_id: int, browser_api: schemas.BrowserApi, db: Session = Depends(get_db)):
     return crud.update_browser_config(db=db, proxy_id=proxy_id, browser_api=browser_api)
+
+
+@app.get('/cities')
+def get_cities(db: Session = Depends(get_db)):
+    return crud.get_cities(db=db)
+
+
+@app.get('/cities/{city_id}')
+def get_city(city_id: str, db: Session = Depends(get_db)):
+    return crud.get_city(city_id=city_id, db=db)

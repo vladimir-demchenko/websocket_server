@@ -45,3 +45,40 @@ class ConfigClick(ConfigClickBase):
 
     class Config:
         from_attributes = True
+
+
+class CityBase(BaseModel):
+    id: str
+    name: str
+
+
+class CityCreate(CityBase):
+    pass
+
+
+class City(CityBase):
+    startField: int
+    currentField: int
+    taken: bool
+    counter: int
+
+    class Config:
+        from_attributes = True
+
+
+class ClicksBase(BaseModel):
+    interval: str
+    city_id: str
+    click_value: float
+
+
+class ClicksCreate(ClicksBase):
+    pass
+
+
+class Clicks(ClicksBase):
+    id: int
+    city: City
+
+    class Config:
+        from_attributes = True

@@ -1,4 +1,5 @@
-from sqlalchemy import Boolean, Column, ForeignKey, String, Integer
+from sqlalchemy import Boolean, Column, ForeignKey, String, Integer, Float
+from sqlalchemy.orm import relationship
 
 from .database import Base
 
@@ -34,3 +35,13 @@ class City(Base):
     currentField = Column(Integer, default=0)
     taken = Column(Boolean, default=False)
     counter = Column(Integer, default=0)
+
+
+class Clicks(Base):
+    __tablename__ = 'clicks'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    city_id = Column(ForeignKey("cities.id"))
+    interval = Column(String)
+    click_value = Column(Float)
+    city = relationship("City",)
