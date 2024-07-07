@@ -123,3 +123,13 @@ def get_cities(db: Session = Depends(get_db)):
 @app.get('/cities/{city_id}')
 def get_city(city_id: str, db: Session = Depends(get_db)):
     return crud.get_city(city_id=city_id, db=db)
+
+
+@app.get('/intervals')
+def get_interval(db: Session = Depends(get_db)):
+    return crud.get_intervals(db)
+
+
+@app.post('/intervals')
+def create_interval(interval: schemas.IntervalCreate, db: Session = Depends(get_db)):
+    return crud.create_interval(interval=interval, db=db)

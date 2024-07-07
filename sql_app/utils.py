@@ -50,9 +50,21 @@ def reset_cities(cities):
 
 def current_interval():
     now = datetime.now(timezone(timedelta(hours=3)))
+
     if dt_time(9, 0) <= now.time() < dt_time(17, 0):
         return '09:00-17:00'
     elif dt_time(17, 0) <= now.time() < dt_time(23, 59, 59):
         return '17:00-00:00'
     else:
         return '00:00-09:00'
+
+
+def sub_interval():
+    now = datetime.now(timezone(timedelta(hours=3)))
+
+    if dt_time(19, 0) <= now.time() < dt_time(21, 0):
+        return "19:00"
+    elif dt_time(21, 0) <= now.time() < dt_time(23, 59, 59):
+        return "21:00"
+    else:
+        return ""

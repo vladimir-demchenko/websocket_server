@@ -42,18 +42,56 @@ def get_configs(db: Session):
 
 
 def get_config(db: Session, config_id: int):
-    return db.query(models.Config).filter(models.Config.id == config_id).first()
+    config = db.query(models.Config).filter(
+        models.Config.id == config_id).first()
+
+    if utils.sub_interval():
+        interval = db.query(models.Interval).filter(
+            models.Interval.time == utils.current_interval()).first()
+        update_cities_click(interval=utils.sub_interval(),
+                            target=interval.target, db=db)
+
+    if (config.interval != utils.current_interval()):
+        print("Change interval")
+        reset_cities(db)
+        reset_proxies(db)
+        db.query(models.Config).update(
+            {models.Config.interval: utils.current_interval()})
+        proxies = db.query(models.Proxy).all()
+        interval = db.query(models.Interval).filter(
+            models.Interval.time == utils.current_interval()).first()
+        for proxy in proxies:
+            db.query(models.Proxy).filter(models.Proxy.id == proxy.id).update(
+                {models.Proxy.targetClicks: (interval.target)/db.query(models.Proxy).count()})
+        update_cities_click(interval=interval.time,
+                            target=interval.target, db=db)
+    db.commit()
+
+    return db.query(models.Config).filter(
+        models.Config.id == config_id).first()
 
 
 def update_config(db: Session, config_id: int, config: schemas.ConfigClick):
     db.query(models.Config).filter(models.Config.id == config_id).update(
-        {models.Config.url: config.url, models.Config.api_key: config.api_key, models.Config.pause: config.pause})
+        {models.Config.url: config.url, models.Config.api_key: config.api_key, models.Config.pause: config.pause, models.Config.interval: config.interval})
     db.commit()
     return db.query(models.Config).filter(models.Config.id == config_id).first()
 
 
 def create_config(db: Session, config: schemas.ConfigClickCreate):
     db_config = models.Config(api_key=config.api_key, url=config.url)
+    db.add(db_config)
+    db.commit()
+    db.refresh(db_config)
+    return db_config
+
+
+def get_intervals(db: Session):
+    return db.query(models.Interval).all()
+
+
+def create_interval(db: Session, interval: schemas.IntervalCreate):
+    db_config = models.Interval(time=interval.time, target=interval.target)
     db.add(db_config)
     db.commit()
     db.refresh(db_config)
@@ -96,15 +134,21 @@ def click(db: Session, proxy_id: int):
     # if when_change - now < 10min -> change_ip + create profile + click+1
     # else -> get_random_city + Proxy.city_id = res[0] + create_profile + click+1
     if time.time() - proxy.when_change < 600:
+        city = db.query(models.City).filter(
+            models.City.id == proxy.city_id).first()
+        if city.counter == city.currentField:
+            return {"status": "Fail", "message": "В данный момент нельзя поменять город", "time": proxy.when_change + 600}
         r_ip = requests.get(url=proxy.change_ip+'&format=json',
                             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+        response = r_ip.json()
         print(r_ip.text)
+        if 'error' in response or response['status'] == 'ERR':
+            return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
         print('Change ip')
     else:
         if proxy.city_id:
             db.query(models.City).filter(models.City.id ==
                                          proxy.city_id).update({models.City.taken: False})
-            db.commit()
         random_city = db.query(models.City).filter(
             models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
         db.query(models.City).filter(models.City.id ==
@@ -118,7 +162,7 @@ def click(db: Session, proxy_id: int):
         response = r_c.json()
         print(response)
         if 'error' in response or response['status'] == 'err':
-            return "Error"
+            return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
         db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.city_id: random_city.id,
                                                                            models.Proxy.when_change: time.time()})
         db.commit()
@@ -182,22 +226,62 @@ def click(db: Session, proxy_id: int):
 
     response = requests.request("POST", url, headers=headers, json=data)
 
+    upd_proxy = db.query(models.Proxy).filter(models.Proxy.id == proxy_id)
+    upd_proxy.update({models.Proxy.clicks: models.Proxy.clicks + 1})
+    db.query(models.City).filter(models.City.id == upd_proxy.first().city_id).update(
+        {models.City.counter: models.City.counter + 1})
+    db.commit()
+
     # print(r_ip.text)
     print(response.text)
     return response.json()
 
 
 def test(db: Session):
-    # cities = db.query(models.City).all()
-    # for city in cities:
-    #     clicks = db.query(models.Clicks).filter(
-    #         models.Clicks.interval == '09:00-17:00', models.Clicks.city_id == city.id).first()
-    #     db.query(models.City).filter(models.City.id == city.id).update(
-    #         {models.City.currentField: int(clicks.click_value * 500)})
+    # clicks = db.query(models.Clicks).filter(
+    #     models.Clicks.interval == '21:00').all()
+    # for click in clicks:
+    #     db.query(models.City).filter(models.City.id == click.city_id).update(
+    #         {models.City.currentField: int(click.click_value * 2500)})
     #     db.commit()
     # return "Success"
-    return db.query(models.City).filter(
-        models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
+    if utils.sub_interval():
+        return "Success"
+    else:
+        return "None"
+    # return create_cities(db)
+
+
+def update_cities_click(interval: str, target: int, db: Session):
+    clicks = db.query(models.Clicks).filter(
+        models.Clicks.interval == interval).all()
+    for click in clicks:
+        db.query(models.City).filter(models.City.id == click.city_id).update(
+            {models.City.currentField: int(click.click_value * target)})
+        db.commit()
+
+
+def get_clicks(db: Session):
+    totalClicks = db.query(func.sum(models.City.currentField)).scalar()
+    clicks = db.query(func.sum(models.City.counter)).scalar()
+    return [clicks, totalClicks]
+
+
+def reset_cities(db: Session):
+    cities = db.query(models.City).all()
+    for city in cities:
+        db.query(models.City).filter(models.City.id == city.id).update(
+            {models.City.currentField: int(0), models.City.taken: False, models.City.counter: 0})
+        db.commit()
+    return get_clicks(db)
+
+
+def reset_proxies(db: Session):
+    proxies = db.query(models.Proxy).all()
+    for proxy in proxies:
+        db.query(models.Proxy).filter(models.Proxy.id == proxy.id).update(
+            {models.Proxy.targetClicks: 0, models.Proxy.clicks: 0})
+        db.commit()
 
 
 def get_cities(db: Session):
@@ -214,3 +298,19 @@ def update_browser_config(db: Session, proxy_id: int, browser_api: schemas.Brows
         {models.Proxy.browser_api: browser_api.browser_api})
     db.commit()
     return "success"
+
+
+def create_cities(db: Session):
+    for city_id, city_data in const.const_cities.items():
+        db_city = models.City(id=city_id, name=city_data['name'])
+        db.add(db_city)
+        db.commit()
+        db.refresh(db_city)
+    for interval, clicks in const.click_config.items():
+        for city_id, click_value in clicks.items():
+            db_click = models.Clicks(
+                city_id=city_id, interval=interval, click_value=click_value)
+            db.add(db_click)
+            db.commit()
+            db.refresh(db_click)
+    return "Success"

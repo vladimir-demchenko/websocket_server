@@ -15,6 +15,8 @@ class Proxy(Base):
     taken = Column(Boolean, default=False)
     browser_api = Column(String, default='')
     city_id = Column(String, default='')
+    targetClicks = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
 
 
 class Config(Base):
@@ -24,6 +26,7 @@ class Config(Base):
     pause = Column(Boolean, default=True)
     api_key = Column(String)
     url = Column(String)
+    interval = Column(String)
 
 
 class City(Base):
@@ -45,3 +48,15 @@ class Clicks(Base):
     interval = Column(String)
     click_value = Column(Float)
     city = relationship("City",)
+
+
+class Interval(Base):
+    __tablename__ = 'intervals'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    time = Column(String)
+    target = Column(Integer)
+    isIncrease = Column(Boolean, default=False)
+    weekDayStart = Column(Integer, default=0)
+    weekDatEnd = Column(Integer, default=0)
+    increaseClick = Column(Integer, default=0)

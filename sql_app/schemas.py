@@ -17,6 +17,8 @@ class Proxy(ProxyBase):
     taken: bool
     browser_api: str
     city_id: str
+    targetClicks: int
+    clicks: int
 
     class Config:
         from_attributes = True
@@ -37,11 +39,13 @@ class ConfigClickCreate(ConfigClickBase):
 
 class ConfigClickUpdate(ConfigClickBase):
     pause: bool
+    interval: str
 
 
 class ConfigClick(ConfigClickBase):
     id: int
     pause: bool
+    interval: str
 
     class Config:
         from_attributes = True
@@ -79,6 +83,26 @@ class ClicksCreate(ClicksBase):
 class Clicks(ClicksBase):
     id: int
     city: City
+
+    class Config:
+        from_attributes = True
+
+
+class IntervalBase(BaseModel):
+    time: str
+    target: int
+
+
+class IntervalCreate(IntervalBase):
+    pass
+
+
+class Interval(IntervalBase):
+    id: int
+    isIncrease: bool
+    weekDayStart: int
+    weekDatEnd: int
+    increaseClick: int
 
     class Config:
         from_attributes = True
