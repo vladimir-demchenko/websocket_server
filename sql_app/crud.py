@@ -4,7 +4,7 @@ import requests
 import time
 from . import models, schemas, const, utils
 from urllib.parse import urlparse
-import random
+import math
 
 
 def get_proxies(db: Session):
@@ -151,6 +151,8 @@ def click(db: Session, proxy_id: int):
                                          proxy.city_id).update({models.City.taken: False})
         random_city = db.query(models.City).filter(
             models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
+        if not random_city:
+            return {"status": "Fail", "message": "Нет доступных городов!"}
         db.query(models.City).filter(models.City.id ==
                                      random_city.id).update({models.City.taken: True})
         # if isinstance(result, str):
@@ -245,10 +247,7 @@ def test(db: Session):
     #         {models.City.currentField: int(click.click_value * 2500)})
     #     db.commit()
     # return "Success"
-    if utils.sub_interval():
-        return "Success"
-    else:
-        return "None"
+    return get_clicks(db)
     # return create_cities(db)
 
 
@@ -257,7 +256,7 @@ def update_cities_click(interval: str, target: int, db: Session):
         models.Clicks.interval == interval).all()
     for click in clicks:
         db.query(models.City).filter(models.City.id == click.city_id).update(
-            {models.City.currentField: int(click.click_value * target)})
+            {models.City.currentField: math.ceil(click.click_value * target)})
         db.commit()
 
 
