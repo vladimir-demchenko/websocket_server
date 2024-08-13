@@ -2,8 +2,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .sql_app import crud, models, schemas
-from .sql_app.database import SessionLocal, engine
+from sql_app import crud, models, schemas
+from sql_app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 

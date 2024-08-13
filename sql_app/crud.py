@@ -240,15 +240,12 @@ def click(db: Session, proxy_id: int):
 
 
 def test(db: Session):
-    # clicks = db.query(models.Clicks).filter(
-    #     models.Clicks.interval == '21:00').all()
+    # clicks = db.query(models.Clicks).all()
     # for click in clicks:
-    #     db.query(models.City).filter(models.City.id == click.city_id).update(
-    #         {models.City.currentField: int(click.click_value * 2500)})
+    #     db.query(models.Clicks).filter(models.Clicks.id == click.id).delete()
     #     db.commit()
-    # return "Success"
-    return get_clicks(db)
-    # return create_cities(db)
+    # create_cities(db)
+    return db.query(models.Clicks).all()
 
 
 def update_cities_click(interval: str, target: int, db: Session):
@@ -300,11 +297,11 @@ def update_browser_config(db: Session, proxy_id: int, browser_api: schemas.Brows
 
 
 def create_cities(db: Session):
-    for city_id, city_data in const.const_cities.items():
-        db_city = models.City(id=city_id, name=city_data['name'])
-        db.add(db_city)
-        db.commit()
-        db.refresh(db_city)
+    # for city_id, city_data in const.const_cities.items():
+    #     db_city = models.City(id=city_id, name=city_data['name'])
+    #     db.add(db_city)
+    #     db.commit()
+    #     db.refresh(db_city)
     for interval, clicks in const.click_config.items():
         for city_id, click_value in clicks.items():
             db_click = models.Clicks(
