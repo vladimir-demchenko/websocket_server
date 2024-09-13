@@ -228,12 +228,6 @@ def click(db: Session, proxy_id: int):
 
     response = requests.request("POST", url, headers=headers, json=data)
 
-    upd_proxy = db.query(models.Proxy).filter(models.Proxy.id == proxy_id)
-    upd_proxy.update({models.Proxy.clicks: models.Proxy.clicks + 1})
-    db.query(models.City).filter(models.City.id == upd_proxy.first().city_id).update(
-        {models.City.counter: models.City.counter + 1})
-    db.commit()
-
     # print(r_ip.text)
     print(response.text)
     return response.json()
