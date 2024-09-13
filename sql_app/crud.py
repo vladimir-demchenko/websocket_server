@@ -133,44 +133,44 @@ def click(db: Session, proxy_id: int):
 
     # if when_change - now < 10min -> change_ip + create profile + click+1
     # else -> get_random_city + Proxy.city_id = res[0] + create_profile + click+1
-    if time.time() - proxy.when_change < 600:
-        city = db.query(models.City).filter(
-            models.City.id == proxy.city_id).first()
-        if city.counter == city.currentField:
-            return {"status": "Fail", "message": "В данный момент нельзя поменять город", "time": proxy.when_change + 600}
-        r_ip = requests.get(url=proxy.change_ip+'&format=json',
-                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
-        response = r_ip.json()
-        print(r_ip.text)
-        if 'error' in response or response['status'] == 'ERR':
-            return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
-        print('Change ip')
-    else:
-        if proxy.city_id:
-            db.query(models.City).filter(models.City.id ==
-                                         proxy.city_id).update({models.City.taken: False})
-        random_city = db.query(models.City).filter(
-            models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
-        if not random_city:
-            return {"status": "Fail", "message": "Нет доступных городов!"}
-        db.query(models.City).filter(models.City.id ==
-                                     random_city.id).update({models.City.taken: True})
-        # if isinstance(result, str):
-        #     print(result)
-        #     return result
-        config = db.query(models.Config).first()
-        r_c = requests.get(url=f'https://mobileproxy.space/api.html?command=change_equipment&proxy_id={int(proxy.proxy_id)}&id_city={int(random_city.id)}',
-                           headers={'Authorization': f"Bearer {config.api_key}"})
-        response = r_c.json()
-        print(response)
-        if 'error' in response or response['status'] == 'err':
-            return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
-        db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.city_id: random_city.id,
-                                                                           models.Proxy.when_change: time.time()})
-        db.commit()
-        r_ip = requests.get(url=proxy.change_ip+'&format=json',
-                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
-        print('Change city')
+    # if time.time() - proxy.when_change < 600:
+    #     city = db.query(models.City).filter(
+    #         models.City.id == proxy.city_id).first()
+    #     if city.counter == city.currentField:
+    #         return {"status": "Fail", "message": "В данный момент нельзя поменять город", "time": proxy.when_change + 600}
+    #     r_ip = requests.get(url=proxy.change_ip+'&format=json',
+    #                         headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+    #     response = r_ip.json()
+    #     print(r_ip.text)
+    #     if 'error' in response or response['status'] == 'ERR':
+    #         return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
+    #     print('Change ip')
+    # else:
+    #     if proxy.city_id:
+    #         db.query(models.City).filter(models.City.id ==
+    #                                      proxy.city_id).update({models.City.taken: False})
+    #     random_city = db.query(models.City).filter(
+    #         models.City.taken == False, models.City.counter <= models.City.currentField).order_by(func.random()).first()
+    #     if not random_city:
+    #         return {"status": "Fail", "message": "Нет доступных городов!"}
+    #     db.query(models.City).filter(models.City.id ==
+    #                                  random_city.id).update({models.City.taken: True})
+    #     # if isinstance(result, str):
+    #     #     print(result)
+    #     #     return result
+    #     config = db.query(models.Config).first()
+    #     r_c = requests.get(url=f'https://mobileproxy.space/api.html?command=change_equipment&proxy_id={int(proxy.proxy_id)}&id_city={int(random_city.id)}',
+    #                        headers={'Authorization': f"Bearer {config.api_key}"})
+    #     response = r_c.json()
+    #     print(response)
+    #     if 'error' in response or response['status'] == 'err':
+    #         return {"status": "Fail", "message": "Ошибка! Попробуйте еще раз!"}
+    #     db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.city_id: random_city.id,
+    #                                                                        models.Proxy.when_change: time.time()})
+    #     db.commit()
+    #     r_ip = requests.get(url=proxy.change_ip+'&format=json',
+    #                         headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'})
+    #     print('Change city')
 
     url = "https://dolphin-anty-api.com/browser_profiles"
 
