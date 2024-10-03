@@ -18,4 +18,4 @@ EXPOSE 8000
 ENV NAME FastAPIApp
 
 # Run app.py when the container launches
-CMD ["uvicorn", "websocket:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "websocket:app", "--host", "0.0.0.0", "--port", "8000"]
