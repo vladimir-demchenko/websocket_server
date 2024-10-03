@@ -1,24 +1,51 @@
 from pydantic import BaseModel
 
 
+class CityBase(BaseModel):
+    name: str
+    short_name: str
+
+
+class CityCreate(CityBase):
+    pass
+
+class CityUpdate(CityBase):
+    city_value: float
+
+class City(CityBase):
+    id: int
+    startField: int
+    currentField: int
+    city_value: float
+    taken: bool
+    counter: int
+
+    class Config:
+        from_attributes = True
+
+
+class ResetCity(BaseModel):
+    interval: str
+
 class ProxyBase(BaseModel):
-    proxy_id: str
     url: str
-    change_ip: str
+    name: str
+    city_id: int
 
 
 class ProxyCreate(ProxyBase):
     pass
 
 
+class ProxyUpdate(ProxyBase):
+    proxy_id: int
+
+
 class Proxy(ProxyBase):
     id: int
-    when_change: float
     taken: bool
-    browser_api: str
-    city_id: str
-    targetClicks: int
-    clicks: int
+    proxy_id: int
+    city: City
 
     class Config:
         from_attributes = True
@@ -31,6 +58,8 @@ class BrowserApi(BaseModel):
 class ConfigClickBase(BaseModel):
     api_key: str
     url: str
+    delay: int
+    interval: str
 
 
 class ConfigClickCreate(ConfigClickBase):
@@ -38,33 +67,14 @@ class ConfigClickCreate(ConfigClickBase):
 
 
 class ConfigClickUpdate(ConfigClickBase):
-    pause: bool
+    delay: int
     interval: str
+    threads: int
 
 
 class ConfigClick(ConfigClickBase):
     id: int
-    pause: bool
-    interval: str
-
-    class Config:
-        from_attributes = True
-
-
-class CityBase(BaseModel):
-    id: str
-    name: str
-
-
-class CityCreate(CityBase):
-    pass
-
-
-class City(CityBase):
-    startField: int
-    currentField: int
-    taken: bool
-    counter: int
+    threads: int
 
     class Config:
         from_attributes = True

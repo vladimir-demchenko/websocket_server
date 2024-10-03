@@ -8,36 +8,37 @@ class Proxy(Base):
     __tablename__ = 'proxies'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    proxy_id = Column(String)
+    name = Column(String)
+    proxy_id = Column(Integer)
     url = Column(String)
-    when_change = Column(Float, default=0)
-    change_ip = Column(String)
     taken = Column(Boolean, default=False)
-    browser_api = Column(String, default='')
-    city_id = Column(String, default='')
-    targetClicks = Column(Integer, default=0)
-    clicks = Column(Integer, default=0)
+    city_id = Column(ForeignKey('cities.id'))
+    city = relationship('City', back_populates='proxy')
 
 
 class Config(Base):
     __tablename__ = 'configs'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pause = Column(Boolean, default=True)
     api_key = Column(String)
     url = Column(String)
     interval = Column(String)
+    delay = Column(Integer, default=0)
+    threads = Column(Integer, default=2)
 
 
 class City(Base):
     __tablename__ = 'cities'
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
+    short_name = Column(String)
+    city_value = Column(Float, default=0)
     startField = Column(Integer, default=0)
     currentField = Column(Integer, default=0)
     taken = Column(Boolean, default=False)
     counter = Column(Integer, default=0)
+    proxy = relationship('Proxy', back_populates='city')
 
 
 class Clicks(Base):
@@ -56,7 +57,3 @@ class Interval(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     time = Column(String)
     target = Column(Integer)
-    isIncrease = Column(Boolean, default=False)
-    weekDayStart = Column(Integer, default=0)
-    weekDatEnd = Column(Integer, default=0)
-    increaseClick = Column(Integer, default=0)

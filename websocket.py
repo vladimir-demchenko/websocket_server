@@ -1,9 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv, find_dotenv
 
 from sql_app import crud, models, schemas
 from sql_app.database import SessionLocal, engine
+
+load_dotenv(find_dotenv())
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -54,7 +57,7 @@ async def root():
     return {"message": "Hello world"}
 
 
-@app.post('/proxies/', response_model=schemas.Proxy)
+@app.post('/proxies/')
 def create_proxy(proxy: schemas.ProxyCreate, db: Session = Depends(get_db)):
     return crud.create_proxy(db=db, proxy=proxy)
 
@@ -65,7 +68,7 @@ def get_proxies(db: Session = Depends(get_db)):
     return proxies
 
 
-@app.get('/proxies/{proxy_id}')
+@app.get('/proxies/{proxy_id}', response_model=schemas.Proxy)
 def get_proxy(proxy_id: int, db: Session = Depends(get_db)):
     return crud.get_proxy(db=db, proxy_id=proxy_id)
 
@@ -75,9 +78,22 @@ def delete_proxy(proxy_id: int, db: Session = Depends(get_db)):
     return crud.delete_proxy(db=db, proxy_id=proxy_id)
 
 
-@app.put('/proxies/{proxy_id}', response_model=schemas.Proxy)
-def update_proxy(proxy_id: int, proxy: schemas.ProxyCreate, db: Session = Depends(get_db)):
+@app.patch('/proxies/{proxy_id}', response_model=schemas.Proxy)
+def update_proxy(proxy_id: int, proxy: schemas.ProxyUpdate, db: Session = Depends(get_db)):
     return crud.update_proxy(db=db, proxy=proxy, id=proxy_id)
+
+
+@app.get('/proxies_random/')
+def get_random_proxy(db: Session = Depends(get_db)):
+    return crud.get_random_proxy(db=db)
+
+@app.patch('/take/{proxy_id}')
+def taken_proxy(proxy_id: int, db: Session = Depends(get_db)):
+    return crud.take_proxy(proxy_id=proxy_id, db=db)
+
+@app.patch('/untake/{proxy_id}')
+def untaken_proxy(proxy_id: int, db: Session = Depends(get_db)):
+    return crud.untake_proxy(proxy_id=proxy_id, db=db)
 
 
 @app.post('/config', response_model=schemas.ConfigClick)
@@ -90,7 +106,7 @@ def update_config(config_id: int, config: schemas.ConfigClickUpdate, db: Session
     return crud.update_config(db=db, config=config, config_id=config_id)
 
 
-@app.get('/configs', response_model=list[schemas.ConfigClick])
+@app.get('/configs')
 def get_configs(db: Session = Depends(get_db)):
     return crud.get_configs(db=db)
 
@@ -100,20 +116,18 @@ def get_config(db: Session = Depends(get_db)):
     return crud.get_config(db=db, config_id=1)
 
 
-@app.post('/click/{proxy_id}')
-def click(proxy_id: int, db: Session = Depends(get_db)):
-    return crud.click(db=db, proxy_id=proxy_id)
+@app.delete('/config/{config_id}')
+def delete_config(config_id: int, db: Session = Depends(get_db)):
+    return crud.delete_config(config_id, db)
+
+@app.post('/profile/{proxy_id}')
+def click(proxy_id: int):
+    return crud.create_profile(proxy_id=proxy_id)
 
 
-@app.get('/tets')
-def test(db: Session = Depends(get_db)):
-    return crud.test(db=db)
-
-
-@app.put('/browser_api/{proxy_id}')
-def update_browser(proxy_id: int, browser_api: schemas.BrowserApi, db: Session = Depends(get_db)):
-    return crud.update_browser_config(db=db, proxy_id=proxy_id, browser_api=browser_api)
-
+@app.delete('/profile/{profile_id}')
+def delete_profile(profile_id: int):
+    return crud.delete_profile(profile_id)
 
 @app.get('/cities')
 def get_cities(db: Session = Depends(get_db)):
@@ -125,6 +139,22 @@ def get_city(city_id: str, db: Session = Depends(get_db)):
     return crud.get_city(city_id=city_id, db=db)
 
 
+@app.post('/cities', response_model=schemas.City)
+def create_city(city: schemas.CityCreate, db: Session = Depends(get_db)):
+    return crud.create_cities(db=db, city=city)
+
+@app.patch('/cities/{city_id}', response_model=schemas.City)
+def update_cities(city_id: int, city: schemas.CityUpdate, db: Session = Depends(get_db)):
+    return crud.update_cities(city_id, city, db)
+
+@app.delete('/cities/{city_id}')
+def delete_city(city_id: int, db: Session = Depends(get_db)):
+    return crud.delete_city(city_id, db)
+
+@app.patch('/click/{city_id}')
+def click(city_id: int, db: Session = Depends(get_db)):
+    return crud.click(city_id, db)
+
 @app.get('/intervals')
 def get_interval(db: Session = Depends(get_db)):
     return crud.get_intervals(db)
@@ -133,3 +163,15 @@ def get_interval(db: Session = Depends(get_db)):
 @app.post('/intervals')
 def create_interval(interval: schemas.IntervalCreate, db: Session = Depends(get_db)):
     return crud.create_interval(interval=interval, db=db)
+
+@app.patch('/intervals/{interval_id}')
+def update_interval(interval_id: int, interval: schemas.IntervalCreate, db: Session = Depends(get_db)):
+    return crud.update_interval(interval_id, interval, db)
+
+@app.post('/reset')
+def reset(interval: schemas.ResetCity, db: Session = Depends(get_db)):
+    return crud.reset_cities(interval, db)
+
+@app.post('/reset_proxies')
+def reset_proxies(db: Session = Depends(get_db)):
+    return crud.reset_proxies(db)
