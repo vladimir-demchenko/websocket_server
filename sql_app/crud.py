@@ -79,7 +79,7 @@ def update_proxy(db: Session, id: int, proxy: schemas.ProxyUpdate):
     response = browser_proxy.json()
     print(response)
     db.query(models.Proxy).filter(models.Proxy.id == id).update(
-        {models.Proxy.url: proxy.url, models.Proxy.city_id: proxy.city_id, models.Proxy.name: proxy.name})
+        {models.Proxy.url: proxy.url, models.Proxy.city_id: proxy.city_id, models.Proxy.name: proxy.name, models.Proxy.proxy_id: proxy.proxy_id})
     db.commit()
     return db.query(models.Proxy).filter(models.Proxy.id == id).first()
 
