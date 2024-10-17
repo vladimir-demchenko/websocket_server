@@ -117,7 +117,7 @@ def get_config(db: Session, config_id: int):
 
 def update_config(db: Session, config_id: int, config: schemas.ConfigClick):
     db.query(models.Config).filter(models.Config.id == config_id).update(
-        {models.Config.url: config.url, models.Config.api_key: config.api_key, models.Config.delay: config.delay, models.Config.interval: config.interval})
+        {models.Config.url: config.url, models.Config.api_key: config.api_key, models.Config.delay: config.delay, models.Config.interval: config.interval, models.Config.threads: config.threads})
     db.commit()
     return db.query(models.Config).filter(models.Config.id == config_id).first()
 
