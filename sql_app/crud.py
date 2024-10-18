@@ -226,7 +226,7 @@ def delete_profile(profile_id):
 
 
 def test(db: Session):
-    return db.query(models.Proxy).join(models.City).filter(models.Proxy.id == 1).first()
+    return db.query(models.Clicks).all()
 
 
 def update_cities_click(interval: str, target: int, db: Session):
@@ -280,6 +280,10 @@ def reset_cities(interval: schemas.ResetCity, db: Session):
             'taken': False,  # Reset taken flag
             'counter': 0     # Reset counter
         })
+
+    if interval.interval == '09:00-17:00':
+        clicks = models.Clicks(date=datetime.now())
+        db.add(clicks)
     
     config = get_config(db, 1)
     new_delay = (calculate_interval_seconds(target.time) / target.target) // config.threads
@@ -288,6 +292,7 @@ def reset_cities(interval: schemas.ResetCity, db: Session):
     db.query(models.Config).filter(models.Config.id == 1).update({models.Config.interval: target.time, models.Config.delay: new_delay })
 
     db.commit()
+    db.refresh(clicks)
     
     return db.query(models.City).all()
 
@@ -326,7 +331,7 @@ def update_browser_config(db: Session, proxy_id: int, browser_api: schemas.Brows
 
 
 def create_cities(db: Session, city: schemas.CityCreate):
-    db_city = models.City(name=city.name, short_name=city.short_name)
+    db_city = models.City(name=city.name, short_name=city.short_name, city_value=city.city_value)
     db.add(db_city)
     db.commit()
     db.refresh(db_city)
@@ -345,5 +350,8 @@ def delete_city(city_id: int, db: Session):
 
 def click(city_id: int, db: Session):
     db.query(models.City).filter(models.City.id == city_id).update({models.City.counter: models.City.counter + 1})
+    latest_date = db.query(models.Clicks).order_by(models.Clicks.date.desc()).first()
+    latest_date.clicks += 1
     db.commit()
+    db.refresh(latest_date)
     return {'success': True}

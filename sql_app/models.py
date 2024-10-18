@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, String, Integer, Float
+from sqlalchemy import Boolean, Column, ForeignKey, String, Integer, Float, Date
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -45,10 +45,8 @@ class Clicks(Base):
     __tablename__ = 'clicks'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    city_id = Column(ForeignKey("cities.id"))
-    interval = Column(String)
-    click_value = Column(Float)
-    city = relationship("City",)
+    date = Column(Date)
+    clicks = Column(Integer, default=0)
 
 
 class Interval(Base):

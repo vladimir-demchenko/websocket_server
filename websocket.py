@@ -175,3 +175,7 @@ def reset(interval: schemas.ResetCity, db: Session = Depends(get_db)):
 @app.post('/reset_proxies')
 def reset_proxies(db: Session = Depends(get_db)):
     return crud.reset_proxies(db)
+
+@app.get('/test')
+def test(db: Session =Depends(get_db)):
+    return crud.test(db)

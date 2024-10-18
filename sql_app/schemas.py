@@ -4,13 +4,14 @@ from pydantic import BaseModel
 class CityBase(BaseModel):
     name: str
     short_name: str
+    city_value: float
 
 
 class CityCreate(CityBase):
     pass
 
 class CityUpdate(CityBase):
-    city_value: float
+    pass
 
 class City(CityBase):
     id: int
@@ -81,18 +82,18 @@ class ConfigClick(ConfigClickBase):
 
 
 class ClicksBase(BaseModel):
-    interval: str
-    city_id: str
-    click_value: float
+    date: str
 
 
 class ClicksCreate(ClicksBase):
     pass
 
+class ClicksUpdate(ClicksBase):
+    clicks: int
 
 class Clicks(ClicksBase):
     id: int
-    city: City
+    clicks: int
 
     class Config:
         from_attributes = True
