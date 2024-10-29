@@ -87,13 +87,13 @@ def update_proxy(proxy_id: int, proxy: schemas.ProxyUpdate, db: Session = Depend
 def get_random_proxy(db: Session = Depends(get_db)):
     return crud.get_random_proxy(db=db)
 
-@app.patch('/take/{proxy_id}')
-def taken_proxy(proxy_id: int, db: Session = Depends(get_db)):
-    return crud.take_proxy(proxy_id=proxy_id, db=db)
+@app.patch('/take/{client_id}')
+def taken_proxy(client_id: int, db: Session = Depends(get_db)):
+    return crud.take_proxy(client_id=client_id, db=db)
 
-@app.patch('/untake/{proxy_id}')
-def untaken_proxy(proxy_id: int, db: Session = Depends(get_db)):
-    return crud.untake_proxy(proxy_id=proxy_id, db=db)
+@app.patch('/untake/{client_id}')
+def untaken_proxy(client_id:int, profile_id: int, browser_proxy_id: int, proxy_id: int, db: Session = Depends(get_db)):
+    return crud.untake_proxy(client_id=client_id,profile_id=profile_id, browser_proxy_id=browser_proxy_id, proxy_id=proxy_id, db=db)
 
 
 @app.post('/config', response_model=schemas.ConfigClick)
@@ -179,3 +179,23 @@ def reset_proxies(db: Session = Depends(get_db)):
 @app.get('/test')
 def test(db: Session =Depends(get_db)):
     return crud.test(db)
+
+@app.get('/clients')
+def get_clients(db: Session = Depends(get_db)):
+    return crud.get_clients(db)
+
+@app.get('/clients/{client_id}')
+def get_client(client_id: int, db: Session = Depends(get_db)):
+    return crud.get_client(client_id, db)
+
+@app.delete('/clients/{client_id}')
+def delete_client(client_id: int, db: Session = Depends(get_db)):
+    return crud.delete_client(client_id, db)
+
+@app.post('/clients')
+def create_clients(client: schemas.ClientCreate, db: Session = Depends(get_db)):
+    return crud.create_client(client=client, db=db)
+
+@app.patch('/clients/{client_id}')
+def update_clients(client_id: int, client: schemas.ClientUpdate, db: Session = Depends(get_db)):
+    return crud.update_client(client_id, client, db)

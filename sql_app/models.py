@@ -48,6 +48,13 @@ class Clicks(Base):
     date = Column(Date)
     clicks = Column(Integer, default=0)
 
+class Client(Base):
+    __tablename__ = 'clients'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    browser_api = Column(String)
+
 
 class Interval(Base):
     __tablename__ = 'intervals'

@@ -19,13 +19,21 @@ def get_proxy(proxy_id: int, db: Session):
 
 
 def create_proxy(db: Session, proxy: schemas.ProxyCreate):
+    db_proxy = models.Proxy(url=proxy.url, name=proxy.name, city_id=proxy.city_id, proxy_id=0)
+    db.add(db_proxy)
+    db.commit()
+    db.refresh(db_proxy)
+
+    return db_proxy
+
+def create_browser_proxy(browser_api: str, proxy: schemas.Proxy):
     parsed_url = urlparse(proxy.url).netloc
     credentials, host_port = parsed_url.split('@')
     login, password = credentials.split(':')
     host, port = host_port.split(':')
 
     browser_proxy = requests.post('https://dolphin-anty-api.com/proxy?Content-Type=application/json', headers={
-        'Authorization': f'Bearer {getenv("API_KEY")}'}, json={
+        'Authorization': f'Bearer {browser_api}'}, json={
         "type": "http",
         "host": f"{host}",
         "port": f"{port}",
@@ -35,27 +43,23 @@ def create_proxy(db: Session, proxy: schemas.ProxyCreate):
     })
 
     response = browser_proxy.json()
-    print(response)
-
-    db_proxy = models.Proxy(proxy_id=response['data']['id'],
-                            url=proxy.url, name=proxy.name, city_id=proxy.city_id)
-    db.add(db_proxy)
-    db.commit()
-    db.refresh(db_proxy)
-
-    return db_proxy
-
+    return response
 
 def delete_proxy(db: Session, proxy_id: int):
     request_proxy = db.query(models.Proxy).filter(models.Proxy.id == proxy_id)
+
+    request_proxy.delete()
+    db.commit()
+    return {'message': f'{proxy_id} deleted'}
+
+    
+def delete_browser_proxy(browser_api: str, proxy_id: int):
     headers = {
-        'Authorization': f'Bearer {getenv("API_KEY")}'
+        'Authorization': f'Bearer {browser_api}'
     }
-    delete_request = requests.delete(f'https://dolphin-anty-api.com/proxy/{request_proxy.first().proxy_id}', headers=headers)
+    delete_request = requests.delete(f'https://dolphin-anty-api.com/proxy/{proxy_id}', headers=headers)
 
     if delete_request.status_code == 200:
-        request_proxy.delete()
-        db.commit()
         return {'message': f'{proxy_id} deleted'}
     else: 
         raise HTTPException(400, delete_request.json())
@@ -93,15 +97,29 @@ def get_random_proxy(db: Session):
         .group_by(func.random())\
         .options(joinedload(models.Proxy.city)).first()
 
-def take_proxy(proxy_id: int, db: Session):
-    db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.taken: True})
+def take_proxy(client_id: int, db: Session):
+    client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    random_proxy = get_random_proxy(db=db)
+    if not random_proxy:
+        return {"status": False, "result": {}}
+    random_proxy.taken = True
     db.commit()
-    return db.query(models.Proxy).filter(models.Proxy.id == proxy_id).first()
+    db.refresh(random_proxy)
 
-def untake_proxy(proxy_id: int, db: Session):
+    browser_proxy = create_browser_proxy(client.browser_api, random_proxy)
+
+    create_response = create_profile(browser_api=client.browser_api, proxy_id=browser_proxy['data']['id'])
+    
+    return {"status": True, "result": {"profile": create_response, "proxy": random_proxy, "browser_proxy": browser_proxy}}
+
+def untake_proxy(client_id: int, profile_id: int, browser_proxy_id: int, proxy_id: int, db: Session):
+    client = db.query(models.Client).filter(models.Client.id == client_id).first()
     db.query(models.Proxy).filter(models.Proxy.id == proxy_id).update({models.Proxy.taken: False})
     db.commit()
-    return db.query(models.Proxy).filter(models.Proxy.id == proxy_id).first()
+    delete_profile_response = delete_profile(client.browser_api,profile_id)
+    delete_proxy_response = delete_browser_proxy(client.browser_api, browser_proxy_id)
+
+    return {"status": True, "result": {"profile": delete_profile_response, "browser_proxy": delete_proxy_response}}
 
 def get_configs(db: Session):
     return db.query(models.Config).all()
@@ -153,7 +171,7 @@ def update_interval(interval_id: int, interval: schemas.IntervalCreate, db: Sess
     return db.query(models.Interval).filter(models.Interval.id == interval_id).first()
 
 
-def create_profile(proxy_id: int):
+def create_profile(browser_api:str, proxy_id: int):
     url = "https://dolphin-anty-api.com/browser_profiles"
 
     data = {
@@ -201,7 +219,7 @@ def create_profile(proxy_id: int):
 
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {getenv("API_KEY")}'
+        'Authorization': f'Bearer {browser_api}'
     }
 
     response = requests.request("POST", url, headers=headers, json=data)
@@ -211,10 +229,10 @@ def create_profile(proxy_id: int):
     return response.json()
 
 
-def delete_profile(profile_id):
+def delete_profile(browser_api: str, profile_id:int):
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {getenv("API_KEY")}'
+        'Authorization': f'Bearer {browser_api}'
     }
 
     response = requests.delete(f'https://dolphin-anty-api.com/browser_profiles/{profile_id}?forceDelete=1', headers=headers)
@@ -292,7 +310,6 @@ def reset_cities(interval: schemas.ResetCity, db: Session):
     db.query(models.Config).filter(models.Config.id == 1).update({models.Config.interval: target.time, models.Config.delay: new_delay })
 
     db.commit()
-    db.refresh(clicks)
     
     return db.query(models.City).all()
 
@@ -355,3 +372,28 @@ def click(city_id: int, db: Session):
     db.commit()
     db.refresh(latest_date)
     return {'success': True}
+
+def create_client(client: schemas.ClientCreate, db: Session):
+    db_client = models.Client(name=client.name)
+    db.add(db_client)
+    db.commit()
+    db.refresh(db_client)
+
+    return db_client
+
+def get_clients(db: Session):
+    return db.query(models.Client).all()
+
+def get_client(client_id: int, db: Session):
+    return db.query(models.Client).filter(models.Client.id == client_id).first()
+
+def update_client( client_id: int,client: schemas.ClientUpdate, db: Session):
+    db.query(models.Client).filter(models.Client.id == client_id).update({models.Client.name: client.name, models.Client.browser_api: client.browser_api})
+    db.commit()
+
+    return {'success': True}
+
+def delete_client(client_id: int, db: Session):
+    db.query(models.Client).filter(models.Client.id == client_id).delete()
+    db.commit()
+    return {"success": True}

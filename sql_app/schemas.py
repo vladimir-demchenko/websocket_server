@@ -117,3 +117,19 @@ class Interval(IntervalBase):
 
     class Config:
         from_attributes = True
+
+class ClientBase(BaseModel):
+    name: str
+
+class ClientCreate(ClientBase):
+    pass
+
+class ClientUpdate(ClientBase):
+    browser_api: str
+
+class Client(ClicksBase):
+    id: int
+    browser_api: str
+
+    class Config:
+        from_attributes = True
