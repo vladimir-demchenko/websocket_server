@@ -282,8 +282,8 @@ def calculate_interval_seconds(time_range):
         return end_seconds - start_seconds
 
 
-def reset_cities(interval: schemas.ResetCity, db: Session):
-    target = db.query(models.Interval).filter(models.Interval.time == interval.interval).first()
+def reset_cities(interval: str, db: Session):
+    target = db.query(models.Interval).filter(models.Interval.time == interval).first()
     cities = db.query(models.City).all()
 
     update_data = []
@@ -299,7 +299,7 @@ def reset_cities(interval: schemas.ResetCity, db: Session):
             'counter': 0     # Reset counter
         })
 
-    if interval.interval == '09:00-17:00':
+    if interval == '09:00-17:00':
         clicks = models.Clicks(date=datetime.now())
         db.add(clicks)
     
@@ -397,3 +397,37 @@ def delete_client(client_id: int, db: Session):
     db.query(models.Client).filter(models.Client.id == client_id).delete()
     db.commit()
     return {"success": True}
+
+def find_current_interval(intervals, current_time):
+    for interval in intervals:
+        
+        # Split the time into start and end times
+        start_time_str, end_time_str = interval.time.split("-")
+        start_time = datetime.strptime(start_time_str, "%H:%M").time()
+        end_time = datetime.strptime(end_time_str, "%H:%M").time()
+
+        # Check if the current time falls within the interval
+        if start_time <= current_time <= end_time:
+            return interval
+        # Handle intervals that go past midnight (e.g., 21:00-00:00)
+        elif start_time > end_time and (start_time <= current_time or current_time <= end_time):
+            return interval
+    
+    return None  # Return None if no interval matches
+
+def schedule_reset(now: schemas.ScheduleCheck, db: Session):
+    intervals = get_intervals(db)
+    config = get_config(db,1)
+    current_time = datetime.fromisoformat(now.now)
+
+        # If no scheduled time fetched, keep trying
+    if not intervals:
+        return {"status": False, "message": "No valid scheduled time found. Retrying in 60 seconds..."}
+       
+
+    # Check if it's the scheduled time
+    if find_current_interval(intervals=intervals, current_time=current_time.time()).time != config.interval:
+        return reset_cities(find_current_interval(intervals=intervals, current_time=current_time.time()).time, db)
+        # Wait to avoid running the task multiple times in the same minute
+
+  

@@ -133,3 +133,6 @@ class Client(ClicksBase):
 
     class Config:
         from_attributes = True
+
+class ScheduleCheck(BaseModel):
+    now: str

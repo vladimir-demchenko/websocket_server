@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv, find_dotenv
 
-from sql_app import crud, models, schemas
-from sql_app.database import SessionLocal, engine
+from .sql_app import crud, models, schemas
+from .sql_app.database import SessionLocal, engine
 
 load_dotenv(find_dotenv())
 
@@ -199,3 +199,7 @@ def create_clients(client: schemas.ClientCreate, db: Session = Depends(get_db)):
 @app.patch('/clients/{client_id}')
 def update_clients(client_id: int, client: schemas.ClientUpdate, db: Session = Depends(get_db)):
     return crud.update_client(client_id, client, db)
+
+@app.post('/schedule')
+def schedule(now: schemas.ScheduleCheck, db: Session = Depends(get_db)):
+    return crud.schedule_reset(now, db)
